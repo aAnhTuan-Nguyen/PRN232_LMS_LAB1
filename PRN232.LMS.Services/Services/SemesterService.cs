@@ -47,14 +47,19 @@ public class SemesterService(IUnitOfWork unitOfWork) : ISemesterService
 
     public async Task<SemesterResponse> GetByIdAsync(int id, string? expand = null, CancellationToken cancellationToken = default)
     {
-        Semester semester = await unitOfWork.Semesters.Query()
-            .AsNoTracking()
-            .Include(item => item.Courses)
-            .ThenInclude(course => course.Subject)
-            .SingleOrDefaultAsync(item => item.SemesterId == id, cancellationToken)
+        bool includeCourses = QueryHelpers.HasExpand(expand, "courses");
+        IQueryable<Semester> query = unitOfWork.Semesters.Query().AsNoTracking();
+
+        if (includeCourses)
+        {
+            query = query.Include(item => item.Courses)
+                .ThenInclude(course => course.Subject);
+        }
+
+        Semester semester = await query.SingleOrDefaultAsync(item => item.SemesterId == id, cancellationToken)
             ?? throw new NotFoundException($"Semester with id {id} was not found.");
 
-        return LmsMapping.ToSemesterResponse(semester, includeCourses: true);
+        return LmsMapping.ToSemesterResponse(semester, includeCourses);
     }
 
     public async Task<SemesterResponse> CreateAsync(CreateSemesterRequest request, CancellationToken cancellationToken = default)

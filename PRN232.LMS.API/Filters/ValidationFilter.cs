@@ -6,7 +6,6 @@ using PRN232.LMS.API.Responses;
 
 namespace PRN232.LMS.API.Filters;
 
-// lớp này được sử dụng để thực hiện việc validate dữ liệu đầu vào của API. Nó sẽ kiểm tra ModelState để tìm lỗi và sử dụng FluentValidation để validate các đối tượng đầu vào. Nếu có lỗi, nó sẽ trả về một BadRequestObjectResult với thông tin lỗi chi tiết. Nếu không có lỗi, nó sẽ tiếp tục thực hiện action tiếp theo trong pipeline.
 public class ValidationFilter : IAsyncActionFilter
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)

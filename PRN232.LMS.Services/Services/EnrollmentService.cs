@@ -60,17 +60,27 @@ public class EnrollmentService(IUnitOfWork unitOfWork) : IEnrollmentService
 
     public async Task<EnrollmentResponse> GetByIdAsync(int id, string? expand = null, CancellationToken cancellationToken = default)
     {
-        Enrollment enrollment = await unitOfWork.Enrollments.Query()
-            .AsNoTracking()
-            .Include(item => item.Student)
-            .Include(item => item.Course)
-            .ThenInclude(course => course.Semester)
-            .Include(item => item.Course)
-            .ThenInclude(course => course.Subject)
-            .SingleOrDefaultAsync(item => item.EnrollmentId == id, cancellationToken)
+        bool includeStudent = QueryHelpers.HasExpand(expand, "student");
+        bool includeCourse = QueryHelpers.HasExpand(expand, "course");
+        IQueryable<Enrollment> query = unitOfWork.Enrollments.Query().AsNoTracking();
+
+        if (includeStudent)
+        {
+            query = query.Include(item => item.Student);
+        }
+
+        if (includeCourse)
+        {
+            query = query.Include(item => item.Course)
+                .ThenInclude(course => course.Semester)
+                .Include(item => item.Course)
+                .ThenInclude(course => course.Subject);
+        }
+
+        Enrollment enrollment = await query.SingleOrDefaultAsync(item => item.EnrollmentId == id, cancellationToken)
             ?? throw new NotFoundException($"Enrollment with id {id} was not found.");
 
-        return LmsMapping.ToEnrollmentResponse(enrollment, includeStudent: true, includeCourse: true);
+        return LmsMapping.ToEnrollmentResponse(enrollment, includeStudent, includeCourse);
     }
 
     public async Task<EnrollmentResponse> CreateAsync(CreateEnrollmentRequest request, CancellationToken cancellationToken = default)

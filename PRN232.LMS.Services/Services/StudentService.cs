@@ -53,18 +53,23 @@ public class StudentService(IUnitOfWork unitOfWork) : IStudentService
 
     public async Task<StudentResponse> GetByIdAsync(int id, string? expand = null, CancellationToken cancellationToken = default)
     {
-        Student student = await unitOfWork.Students.Query()
-            .AsNoTracking()
-            .Include(item => item.Enrollments)
-            .ThenInclude(enrollment => enrollment.Course)
-            .ThenInclude(course => course.Semester)
-            .Include(item => item.Enrollments)
-            .ThenInclude(enrollment => enrollment.Course)
-            .ThenInclude(course => course.Subject)
-            .SingleOrDefaultAsync(item => item.StudentId == id, cancellationToken)
+        bool includeEnrollments = QueryHelpers.HasExpand(expand, "enrollments");
+        IQueryable<Student> query = unitOfWork.Students.Query().AsNoTracking();
+
+        if (includeEnrollments)
+        {
+            query = query.Include(item => item.Enrollments)
+                .ThenInclude(enrollment => enrollment.Course)
+                .ThenInclude(course => course.Semester)
+                .Include(item => item.Enrollments)
+                .ThenInclude(enrollment => enrollment.Course)
+                .ThenInclude(course => course.Subject);
+        }
+
+        Student student = await query.SingleOrDefaultAsync(item => item.StudentId == id, cancellationToken)
             ?? throw new NotFoundException($"Student with id {id} was not found.");
 
-        return LmsMapping.ToStudentResponse(student, includeEnrollments: true);
+        return LmsMapping.ToStudentResponse(student, includeEnrollments);
     }
 
     public async Task<StudentResponse> CreateAsync(CreateStudentRequest request, CancellationToken cancellationToken = default)

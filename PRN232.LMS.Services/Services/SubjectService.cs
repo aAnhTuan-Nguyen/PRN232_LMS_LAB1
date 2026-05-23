@@ -49,14 +49,19 @@ public class SubjectService(IUnitOfWork unitOfWork) : ISubjectService
 
     public async Task<SubjectResponse> GetByIdAsync(int id, string? expand = null, CancellationToken cancellationToken = default)
     {
-        Subject subject = await unitOfWork.Subjects.Query()
-            .AsNoTracking()
-            .Include(item => item.Courses)
-            .ThenInclude(course => course.Semester)
-            .SingleOrDefaultAsync(item => item.SubjectId == id, cancellationToken)
+        bool includeCourses = QueryHelpers.HasExpand(expand, "courses");
+        IQueryable<Subject> query = unitOfWork.Subjects.Query().AsNoTracking();
+
+        if (includeCourses)
+        {
+            query = query.Include(item => item.Courses)
+                .ThenInclude(course => course.Semester);
+        }
+
+        Subject subject = await query.SingleOrDefaultAsync(item => item.SubjectId == id, cancellationToken)
             ?? throw new NotFoundException($"Subject with id {id} was not found.");
 
-        return LmsMapping.ToSubjectResponse(subject, includeCourses: true);
+        return LmsMapping.ToSubjectResponse(subject, includeCourses);
     }
 
     public async Task<SubjectResponse> CreateAsync(CreateSubjectRequest request, CancellationToken cancellationToken = default)

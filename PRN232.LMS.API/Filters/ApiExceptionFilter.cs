@@ -6,7 +6,6 @@ using PRN232.LMS.Services.Exceptions;
 
 namespace PRN232.LMS.API.Filters;
 
-// lớp này được sử dụng để xử lý các ngoại lệ (exception) xảy ra trong quá trình thực thi API. Nó sẽ bắt các ngoại lệ và trả về một ObjectResult phù hợp với loại ngoại lệ đó. Nếu là NotFoundException, nó sẽ trả về một NotFoundObjectResult với thông tin lỗi chi tiết. Nếu là ValidationException, nó sẽ trả về một BadRequestObjectResult với thông tin lỗi chi tiết. Nếu là bất kỳ loại ngoại lệ nào khác, nó sẽ ghi log lỗi và trả về một ObjectResult với thông tin lỗi chung.
 public class ApiExceptionFilter(ILogger<ApiExceptionFilter> logger) : IExceptionFilter
 {
     public void OnException(ExceptionContext context)

@@ -10,8 +10,7 @@ public class GenericRepository<TEntity>(LmsDbContext dbContext) : IGenericReposi
 
     public IQueryable<TEntity> Query()
     {
-        return _dbSet.AsQueryable(); 
-        //return _dbSet; // có thể bỏ AsQueryable() vì DbSet đã triển khai IQueryable<TEntity> rồi
+        return _dbSet.AsQueryable();
     }
 
     public async Task<TEntity?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
