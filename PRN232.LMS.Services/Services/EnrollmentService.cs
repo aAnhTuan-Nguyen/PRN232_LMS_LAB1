@@ -23,39 +23,22 @@ public class EnrollmentService(IUnitOfWork unitOfWork) : IEnrollmentService
 
     public Task<PagedResult<object>> GetAsync(CollectionQueryParameters parameters, CancellationToken cancellationToken = default)
     {
-        bool includeStudent = QueryHelpers.HasExpand(parameters.Expand, "student");
-        bool includeCourse = QueryHelpers.HasExpand(parameters.Expand, "course");
         IQueryable<Enrollment> query = unitOfWork.Enrollments.Query().AsNoTracking();
+        return ToPagedEnrollmentResponseAsync(query, parameters, cancellationToken);
+    }
 
-        if (includeStudent)
-        {
-            query = query.Include(enrollment => enrollment.Student);
-        }
+    public async Task<PagedResult<object>> GetByCourseAsync(
+        int courseId,
+        CollectionQueryParameters parameters,
+        CancellationToken cancellationToken = default)
+    {
+        await EnsureCourseExistsAsync(courseId, cancellationToken);
 
-        if (includeCourse)
-        {
-            query = query.Include(enrollment => enrollment.Course)
-                .ThenInclude(course => course.Semester)
-                .Include(enrollment => enrollment.Course)
-                .ThenInclude(course => course.Subject);
-        }
+        IQueryable<Enrollment> query = unitOfWork.Enrollments.Query()
+            .AsNoTracking()
+            .Where(enrollment => enrollment.CourseId == courseId);
 
-        if (!string.IsNullOrWhiteSpace(parameters.Search))
-        {
-            string search = parameters.Search.Trim().ToLower();
-            query = query.Where(enrollment =>
-                enrollment.Status.ToLower().Contains(search)
-                || enrollment.Student.FullName.ToLower().Contains(search)
-                || enrollment.Student.Email.ToLower().Contains(search)
-                || enrollment.Course.CourseName.ToLower().Contains(search));
-        }
-
-        query = QueryHelpers.ApplySort(query, parameters.Sort, Sorts, "enrollmentId");
-        return QueryHelpers.ToPagedResponseAsync(
-            query,
-            parameters,
-            enrollment => LmsMapping.ToEnrollmentResponse(enrollment, includeStudent, includeCourse),
-            cancellationToken);
+        return await ToPagedEnrollmentResponseAsync(query, parameters, cancellationToken);
     }
 
     public async Task<EnrollmentResponse> GetByIdAsync(int id, string? expand = null, CancellationToken cancellationToken = default)
@@ -128,6 +111,45 @@ public class EnrollmentService(IUnitOfWork unitOfWork) : IEnrollmentService
 
         unitOfWork.Enrollments.Remove(enrollment);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+    }
+
+    private Task<PagedResult<object>> ToPagedEnrollmentResponseAsync(
+        IQueryable<Enrollment> query,
+        CollectionQueryParameters parameters,
+        CancellationToken cancellationToken)
+    {
+        bool includeStudent = QueryHelpers.HasExpand(parameters.Expand, "student");
+        bool includeCourse = QueryHelpers.HasExpand(parameters.Expand, "course");
+
+        if (includeStudent)
+        {
+            query = query.Include(enrollment => enrollment.Student);
+        }
+
+        if (includeCourse)
+        {
+            query = query.Include(enrollment => enrollment.Course)
+                .ThenInclude(course => course.Semester)
+                .Include(enrollment => enrollment.Course)
+                .ThenInclude(course => course.Subject);
+        }
+
+        if (!string.IsNullOrWhiteSpace(parameters.Search))
+        {
+            string search = parameters.Search.Trim().ToLower();
+            query = query.Where(enrollment =>
+                enrollment.Status.ToLower().Contains(search)
+                || enrollment.Student.FullName.ToLower().Contains(search)
+                || enrollment.Student.Email.ToLower().Contains(search)
+                || enrollment.Course.CourseName.ToLower().Contains(search));
+        }
+
+        query = QueryHelpers.ApplySort(query, parameters.Sort, Sorts, "enrollmentId");
+        return QueryHelpers.ToPagedResponseAsync(
+            query,
+            parameters,
+            enrollment => LmsMapping.ToEnrollmentResponse(enrollment, includeStudent, includeCourse),
+            cancellationToken);
     }
 
     private async Task EnsureStudentExistsAsync(int studentId, CancellationToken cancellationToken)

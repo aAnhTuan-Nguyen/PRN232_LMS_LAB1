@@ -8,6 +8,8 @@ public interface IEnrollmentService
 {
     Task<PagedResult<object>> GetAsync(CollectionQueryParameters parameters, CancellationToken cancellationToken = default);
 
+    Task<PagedResult<object>> GetByCourseAsync(int courseId, CollectionQueryParameters parameters, CancellationToken cancellationToken = default);
+
     Task<EnrollmentResponse> GetByIdAsync(int id, string? expand = null, CancellationToken cancellationToken = default);
 
     Task<EnrollmentResponse> CreateAsync(CreateEnrollmentRequest request, CancellationToken cancellationToken = default);
