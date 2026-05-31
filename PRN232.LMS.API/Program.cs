@@ -1,5 +1,6 @@
 using Microsoft.OpenApi;
 using PRN232.LMS.API.Filters;
+using PRN232.LMS.API.Infrastructure;
 using PRN232.LMS.API.Swagger;
 using PRN232.LMS.Repositories;
 using PRN232.LMS.Services;
@@ -39,6 +40,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+await app.MigrateDatabaseAsync();
 
 if (app.Environment.IsDevelopment())
 {
