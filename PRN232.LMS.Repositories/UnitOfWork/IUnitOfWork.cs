@@ -15,5 +15,9 @@ public interface IUnitOfWork
 
     IGenericRepository<Enrollment> Enrollments { get; }
 
+    IGenericRepository<User> Users { get; }
+
+    IGenericRepository<RefreshToken> RefreshTokens { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

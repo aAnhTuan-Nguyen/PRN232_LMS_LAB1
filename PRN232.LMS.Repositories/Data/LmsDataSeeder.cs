@@ -12,6 +12,7 @@ public static class LmsDataSeeder
         modelBuilder.Entity<Student>().HasData(BuildStudents());
         modelBuilder.Entity<Course>().HasData(BuildCourses());
         modelBuilder.Entity<Enrollment>().HasData(BuildEnrollments());
+        modelBuilder.Entity<User>().HasData(BuildUsers());
     }
 
     private static IEnumerable<Semester> BuildSemesters()
@@ -93,5 +94,26 @@ public static class LmsDataSeeder
             EnrollDate = new DateTime(2026, ((index - 1) % 12) + 1, ((index - 1) % 27) + 1, 0, 0, 0, DateTimeKind.Utc),
             Status = statuses[(index - 1) % statuses.Length]
         });
+    }
+
+    private static IEnumerable<User> BuildUsers()
+    {
+        return
+        [
+            new User
+            {
+                UserId = 1,
+                Username = "admin",
+                PasswordHash = "AQAAAAIAAYagAAAAEAARIjNEVWZ3iJmqu8zd7v9beM38/rDCq5QIQb9fxyMcTbTS7+2d/1D1jeksUJiSHA==",
+                Role = "Admin"
+            },
+            new User
+            {
+                UserId = 2,
+                Username = "student",
+                PasswordHash = "AQAAAAIAAYagAAAAEBAhMkNUZXaHmKm6u9zd/g+Moi/X/8e6K5vowoVxX3V8sxKlZw6e8oWnp1y49EQJhw==",
+                Role = "Student"
+            }
+        ];
     }
 }

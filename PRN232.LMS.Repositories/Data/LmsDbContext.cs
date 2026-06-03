@@ -15,6 +15,10 @@ public class LmsDbContext(DbContextOptions<LmsDbContext> options) : DbContext(op
 
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
 
+    public DbSet<User> Users => Set<User>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LmsDbContext).Assembly);
