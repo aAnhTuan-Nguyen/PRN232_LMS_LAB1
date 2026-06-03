@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using PRN232.LMS.API.Filters;
+using PRN232.LMS.API.Infrastructure;
 using PRN232.LMS.API.Swagger;
 using PRN232.LMS.Repositories;
 using PRN232.LMS.Repositories.Data;
@@ -42,7 +43,7 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-await ApplyDatabaseMigrationsAsync(app);
+await app.MigrateDatabaseAsync();
 
 if (app.Environment.IsDevelopment())
 {
@@ -82,38 +83,4 @@ static void IncludeXmlCommentsIfExists(Swashbuckle.AspNetCore.SwaggerGen.Swagger
     {
         options.IncludeXmlComments(xmlPath);
     }
-}
-
-static async Task ApplyDatabaseMigrationsAsync(WebApplication app)
-{
-    using IServiceScope scope = app.Services.CreateScope();
-    LmsDbContext dbContext = scope.ServiceProvider.GetRequiredService<LmsDbContext>();
-    ILoggerFactory loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
-    ILogger logger = loggerFactory.CreateLogger("DatabaseMigration");
-
-    const int maxAttempts = 10;
-    TimeSpan delay = TimeSpan.FromSeconds(3);
-
-    for (int attempt = 1; attempt <= maxAttempts; attempt++)
-    {
-        try
-        {
-            await dbContext.Database.MigrateAsync();
-            logger.LogInformation("Database migrations applied successfully.");
-            return;
-        }
-        catch (Exception ex) when (attempt < maxAttempts)
-        {
-            logger.LogWarning(
-                ex,
-                "Database migration attempt {Attempt}/{MaxAttempts} failed. Retrying in {DelaySeconds} seconds.",
-                attempt,
-                maxAttempts,
-                delay.TotalSeconds);
-
-            await Task.Delay(delay);
-        }
-    }
-
-    await dbContext.Database.MigrateAsync();
 }

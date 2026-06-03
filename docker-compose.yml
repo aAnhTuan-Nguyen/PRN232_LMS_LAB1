@@ -22,10 +22,10 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d prn232_lms"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-prn232_lms}"]
       interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 10
       start_period: 5s
     ports:
       - "5432:5432"
