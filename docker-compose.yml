@@ -3,23 +3,30 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: prn232-lms-api
+    container_name: prn232-lms-api-submit
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:?set in .env}
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=prn232_lms;Username=postgres;Password=postgres
     ports:
       - "8080:8080"
 
   postgres:
     image: postgres:16
-    container_name: prn232-lms-postgres
+    container_name: prn232-lms-postgres-submit
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-prn232_lms}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: prn232_lms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d prn232_lms"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 5s
     ports:
       - "5432:5432"
     volumes:
