@@ -11,6 +11,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:?set in .env}
+      Jwt__Issuer: ${Jwt__Issuer:-PRN232.LMS.API}
+      Jwt__Audience: ${Jwt__Audience:-PRN232.LMS.Client}
+      Jwt__Secret: ${Jwt__Secret:?set in .env}
+      Jwt__AccessTokenMinutes: ${Jwt__AccessTokenMinutes:-60}
+      Jwt__RefreshTokenDays: ${Jwt__RefreshTokenDays:-7}
     ports:
       - "8080:8080"
 
