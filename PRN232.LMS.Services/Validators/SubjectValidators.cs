@@ -9,7 +9,9 @@ public class CreateSubjectRequestValidator : AbstractValidator<CreateSubjectRequ
     {
         RuleFor(request => request.SubjectCode)
             .NotEmpty()
-            .MaximumLength(20);
+            .MaximumLength(20)
+            .Matches(@"^[A-Za-z]{2,5}[0-9]{3}$")
+            .WithMessage("Subject code must follow the style PRN232.");
 
         RuleFor(request => request.SubjectName)
             .NotEmpty()
@@ -26,7 +28,9 @@ public class UpdateSubjectRequestValidator : AbstractValidator<UpdateSubjectRequ
     {
         RuleFor(request => request.SubjectCode)
             .NotEmpty()
-            .MaximumLength(20);
+            .MaximumLength(20)
+            .Matches(@"^[A-Za-z]{2,5}[0-9]{3}$")
+            .WithMessage("Subject code must follow the style PRN232.");
 
         RuleFor(request => request.SubjectName)
             .NotEmpty()

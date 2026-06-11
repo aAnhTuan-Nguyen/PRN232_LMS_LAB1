@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PRN232.LMS.API.Responses;
 using PRN232.LMS.Services.Models.Common;
@@ -8,8 +10,10 @@ using PRN232.LMS.Services.Services;
 namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
+[ApiVersion(1.0)]
 [Route("api/semesters")]
-[Produces("application/json")]
+[Route("api/v{version:apiVersion}/semesters")]
+[Produces("application/json", "application/xml")]
 public class SemestersController(ISemesterService semesterService) : ControllerBase
 {
     [HttpGet]
@@ -26,7 +30,7 @@ public class SemestersController(ISemesterService semesterService) : ControllerB
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<SemesterResponse>>> GetSemesterById(
-        int id,
+        [FromRoute] int id,
         [FromQuery] string? expand,
         CancellationToken cancellationToken)
     {
@@ -35,6 +39,7 @@ public class SemestersController(ISemesterService semesterService) : ControllerB
     }
 
     [HttpPost]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<SemesterResponse>>> CreateSemester(
@@ -49,11 +54,12 @@ public class SemestersController(ISemesterService semesterService) : ControllerB
     }
 
     [HttpPut("{id:int}")]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<SemesterResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<SemesterResponse>>> UpdateSemester(
-        int id,
+        [FromRoute] int id,
         [FromBody] UpdateSemesterRequest request,
         CancellationToken cancellationToken)
     {
@@ -62,9 +68,10 @@ public class SemestersController(ISemesterService semesterService) : ControllerB
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<object?>>> DeleteSemester(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiResponse<object?>>> DeleteSemester([FromRoute] int id, CancellationToken cancellationToken)
     {
         await semesterService.DeleteAsync(id, cancellationToken);
         return Ok(ApiResponse<object?>.Ok(null, "Semester deleted successfully."));
