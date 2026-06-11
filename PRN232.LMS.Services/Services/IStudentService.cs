@@ -8,6 +8,8 @@ public interface IStudentService
 {
     Task<PagedResult<object>> GetAsync(CollectionQueryParameters parameters, CancellationToken cancellationToken = default);
 
+    Task<PagedResult<object>> GetByCourseAsync(int courseId, CollectionQueryParameters parameters, CancellationToken cancellationToken = default);
+
     Task<StudentResponse> GetByIdAsync(int id, string? expand = null, CancellationToken cancellationToken = default);
 
     Task<StudentResponse> CreateAsync(CreateStudentRequest request, CancellationToken cancellationToken = default);

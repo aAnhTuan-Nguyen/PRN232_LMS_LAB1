@@ -16,6 +16,10 @@ public class UnitOfWork(LmsDbContext dbContext) : IUnitOfWork
 
     public IGenericRepository<Enrollment> Enrollments { get; } = new GenericRepository<Enrollment>(dbContext);
 
+    public IGenericRepository<User> Users { get; } = new GenericRepository<User>(dbContext);
+
+    public IGenericRepository<RefreshToken> RefreshTokens { get; } = new GenericRepository<RefreshToken>(dbContext);
+
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return dbContext.SaveChangesAsync(cancellationToken);

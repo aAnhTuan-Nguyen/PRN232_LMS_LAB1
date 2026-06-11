@@ -51,6 +51,51 @@ public class StudentService(IUnitOfWork unitOfWork) : IStudentService
             cancellationToken);
     }
 
+    public async Task<PagedResult<object>> GetByCourseAsync(
+        int courseId,
+        CollectionQueryParameters parameters,
+        CancellationToken cancellationToken = default)
+    {
+        bool courseExists = await unitOfWork.Courses.Query()
+            .AsNoTracking()
+            .AnyAsync(course => course.CourseId == courseId, cancellationToken);
+
+        if (!courseExists)
+        {
+            throw new NotFoundException($"Course with id {courseId} was not found.");
+        }
+
+        bool includeEnrollments = QueryHelpers.HasExpand(parameters.Expand, "enrollments");
+        IQueryable<Student> query = unitOfWork.Students.Query()
+            .AsNoTracking()
+            .Where(student => student.Enrollments.Any(enrollment => enrollment.CourseId == courseId));
+
+        if (includeEnrollments)
+        {
+            query = query.Include(student => student.Enrollments.Where(enrollment => enrollment.CourseId == courseId))
+                .ThenInclude(enrollment => enrollment.Course)
+                .ThenInclude(course => course.Semester)
+                .Include(student => student.Enrollments.Where(enrollment => enrollment.CourseId == courseId))
+                .ThenInclude(enrollment => enrollment.Course)
+                .ThenInclude(course => course.Subject);
+        }
+
+        if (!string.IsNullOrWhiteSpace(parameters.Search))
+        {
+            string search = parameters.Search.Trim().ToLower();
+            query = query.Where(student =>
+                student.FullName.ToLower().Contains(search)
+                || student.Email.ToLower().Contains(search));
+        }
+
+        query = QueryHelpers.ApplySort(query, parameters.Sort, Sorts, "studentId");
+        return await QueryHelpers.ToPagedResponseAsync(
+            query,
+            parameters,
+            student => LmsMapping.ToStudentResponse(student, includeEnrollments),
+            cancellationToken);
+    }
+
     public async Task<StudentResponse> GetByIdAsync(int id, string? expand = null, CancellationToken cancellationToken = default)
     {
         bool includeEnrollments = QueryHelpers.HasExpand(expand, "enrollments");
