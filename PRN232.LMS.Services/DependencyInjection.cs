@@ -1,5 +1,7 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
+using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Services.Services;
 
 namespace PRN232.LMS.Services;
@@ -15,6 +17,8 @@ public static class DependencyInjection
         services.AddScoped<ICourseService, CourseService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<IEnrollmentService, EnrollmentService>();
+        services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
         return services;
     }
