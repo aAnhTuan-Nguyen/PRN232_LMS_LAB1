@@ -9,6 +9,7 @@ public static class DatabaseMigrationExtensions
     {
         const int maxAttempts = 10;
         TimeSpan retryDelay = TimeSpan.FromSeconds(3);
+        Exception? lastException = null;
 
         ILogger logger = app.Services
             .GetRequiredService<ILoggerFactory>()
@@ -29,6 +30,7 @@ public static class DatabaseMigrationExtensions
             }
             catch (Exception exception) when (attempt < maxAttempts)
             {
+                lastException = exception;
                 logger.LogWarning(
                     exception,
                     "Database migration attempt {Attempt}/{MaxAttempts} failed. Retrying in {RetryDelaySeconds} seconds.",
@@ -38,6 +40,13 @@ public static class DatabaseMigrationExtensions
 
                 await Task.Delay(retryDelay);
             }
+            catch (Exception exception)
+            {
+                lastException = exception;
+                break;
+            }
         }
+
+        throw new InvalidOperationException("Database migration failed after all retry attempts.", lastException);
     }
 }

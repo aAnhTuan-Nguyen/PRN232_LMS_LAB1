@@ -9,6 +9,7 @@ using PRN232.LMS.API.Middleware;
 using PRN232.LMS.API.Responses;
 using PRN232.LMS.API.Swagger;
 using PRN232.LMS.Repositories;
+using PRN232.LMS.Repositories.Data;
 using PRN232.LMS.Services;
 using PRN232.LMS.Services.Options;
 using Scalar.AspNetCore;
