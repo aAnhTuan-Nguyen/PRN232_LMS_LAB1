@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.UnitOfWork;
 using PRN232.LMS.Services.Exceptions;
+using PRN232.LMS.Services.Models.Business;
 using PRN232.LMS.Services.Models.Common;
 using PRN232.LMS.Services.Models.Requests;
 using PRN232.LMS.Services.Models.Responses;
@@ -56,7 +57,15 @@ public class CourseService(IUnitOfWork unitOfWork) : ICourseService
         return QueryHelpers.ToPagedResponseAsync(
             query,
             parameters,
-            course => LmsMapping.ToCourseResponse(course, includeSemester, includeSubject, includeEnrollments),
+            course =>
+            {
+                CourseBusinessModel businessModel = LmsMapping.ToCourseBusinessModel(
+                    course,
+                    includeSemester,
+                    includeSubject,
+                    includeEnrollments);
+                return LmsMapping.ToCourseResponse(businessModel, includeSemester, includeSubject, includeEnrollments);
+            },
             cancellationToken);
     }
 
@@ -85,7 +94,12 @@ public class CourseService(IUnitOfWork unitOfWork) : ICourseService
         Course course = await query.SingleOrDefaultAsync(item => item.CourseId == id, cancellationToken)
             ?? throw new NotFoundException($"Course with id {id} was not found.");
 
-        return LmsMapping.ToCourseResponse(course, includeSemester, includeSubject, includeEnrollments);
+        CourseBusinessModel businessModel = LmsMapping.ToCourseBusinessModel(
+            course,
+            includeSemester,
+            includeSubject,
+            includeEnrollments);
+        return LmsMapping.ToCourseResponse(businessModel, includeSemester, includeSubject, includeEnrollments);
     }
 
     public async Task<CourseResponse> CreateAsync(CreateCourseRequest request, CancellationToken cancellationToken = default)

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.UnitOfWork;
 using PRN232.LMS.Services.Exceptions;
+using PRN232.LMS.Services.Models.Business;
 using PRN232.LMS.Services.Models.Common;
 using PRN232.LMS.Services.Models.Requests;
 using PRN232.LMS.Services.Models.Responses;
@@ -41,7 +42,11 @@ public class SemesterService(IUnitOfWork unitOfWork) : ISemesterService
         return QueryHelpers.ToPagedResponseAsync(
             query,
             parameters,
-            semester => LmsMapping.ToSemesterResponse(semester, includeCourses),
+            semester =>
+            {
+                SemesterBusinessModel businessModel = LmsMapping.ToSemesterBusinessModel(semester, includeCourses);
+                return LmsMapping.ToSemesterResponse(businessModel, includeCourses);
+            },
             cancellationToken);
     }
 
@@ -59,7 +64,8 @@ public class SemesterService(IUnitOfWork unitOfWork) : ISemesterService
         Semester semester = await query.SingleOrDefaultAsync(item => item.SemesterId == id, cancellationToken)
             ?? throw new NotFoundException($"Semester with id {id} was not found.");
 
-        return LmsMapping.ToSemesterResponse(semester, includeCourses);
+        SemesterBusinessModel businessModel = LmsMapping.ToSemesterBusinessModel(semester, includeCourses);
+        return LmsMapping.ToSemesterResponse(businessModel, includeCourses);
     }
 
     public async Task<SemesterResponse> CreateAsync(CreateSemesterRequest request, CancellationToken cancellationToken = default)
@@ -74,7 +80,8 @@ public class SemesterService(IUnitOfWork unitOfWork) : ISemesterService
         await unitOfWork.Semesters.AddAsync(semester, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return LmsMapping.ToSemesterResponse(semester, includeCourses: false);
+        SemesterBusinessModel businessModel = LmsMapping.ToSemesterBusinessModel(semester, includeCourses: false);
+        return LmsMapping.ToSemesterResponse(businessModel, includeCourses: false);
     }
 
     public async Task<SemesterResponse> UpdateAsync(int id, UpdateSemesterRequest request, CancellationToken cancellationToken = default)
@@ -89,7 +96,8 @@ public class SemesterService(IUnitOfWork unitOfWork) : ISemesterService
         unitOfWork.Semesters.Update(semester);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return LmsMapping.ToSemesterResponse(semester, includeCourses: false);
+        SemesterBusinessModel businessModel = LmsMapping.ToSemesterBusinessModel(semester, includeCourses: false);
+        return LmsMapping.ToSemesterResponse(businessModel, includeCourses: false);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)

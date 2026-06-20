@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.UnitOfWork;
 using PRN232.LMS.Services.Exceptions;
+using PRN232.LMS.Services.Models.Business;
 using PRN232.LMS.Services.Models.Common;
 using PRN232.LMS.Services.Models.Requests;
 using PRN232.LMS.Services.Models.Responses;
@@ -43,7 +44,11 @@ public class SubjectService(IUnitOfWork unitOfWork) : ISubjectService
         return QueryHelpers.ToPagedResponseAsync(
             query,
             parameters,
-            subject => LmsMapping.ToSubjectResponse(subject, includeCourses),
+            subject =>
+            {
+                SubjectBusinessModel businessModel = LmsMapping.ToSubjectBusinessModel(subject, includeCourses);
+                return LmsMapping.ToSubjectResponse(businessModel, includeCourses);
+            },
             cancellationToken);
     }
 
@@ -61,7 +66,8 @@ public class SubjectService(IUnitOfWork unitOfWork) : ISubjectService
         Subject subject = await query.SingleOrDefaultAsync(item => item.SubjectId == id, cancellationToken)
             ?? throw new NotFoundException($"Subject with id {id} was not found.");
 
-        return LmsMapping.ToSubjectResponse(subject, includeCourses);
+        SubjectBusinessModel businessModel = LmsMapping.ToSubjectBusinessModel(subject, includeCourses);
+        return LmsMapping.ToSubjectResponse(businessModel, includeCourses);
     }
 
     public async Task<SubjectResponse> CreateAsync(CreateSubjectRequest request, CancellationToken cancellationToken = default)
@@ -76,7 +82,8 @@ public class SubjectService(IUnitOfWork unitOfWork) : ISubjectService
         await unitOfWork.Subjects.AddAsync(subject, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return LmsMapping.ToSubjectResponse(subject, includeCourses: false);
+        SubjectBusinessModel businessModel = LmsMapping.ToSubjectBusinessModel(subject, includeCourses: false);
+        return LmsMapping.ToSubjectResponse(businessModel, includeCourses: false);
     }
 
     public async Task<SubjectResponse> UpdateAsync(int id, UpdateSubjectRequest request, CancellationToken cancellationToken = default)
@@ -91,7 +98,8 @@ public class SubjectService(IUnitOfWork unitOfWork) : ISubjectService
         unitOfWork.Subjects.Update(subject);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return LmsMapping.ToSubjectResponse(subject, includeCourses: false);
+        SubjectBusinessModel businessModel = LmsMapping.ToSubjectBusinessModel(subject, includeCourses: false);
+        return LmsMapping.ToSubjectResponse(businessModel, includeCourses: false);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)

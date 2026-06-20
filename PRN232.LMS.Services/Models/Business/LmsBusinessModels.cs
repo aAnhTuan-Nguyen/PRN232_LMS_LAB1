@@ -9,6 +9,8 @@ public class SemesterBusinessModel
     public DateTime StartDate { get; set; }
 
     public DateTime EndDate { get; set; }
+
+    public IReadOnlyList<CourseBusinessModel>? Courses { get; set; }
 }
 
 public class SubjectBusinessModel
@@ -20,6 +22,8 @@ public class SubjectBusinessModel
     public string SubjectName { get; set; } = string.Empty;
 
     public int Credit { get; set; }
+
+    public IReadOnlyList<CourseBusinessModel>? Courses { get; set; }
 }
 
 public class CourseBusinessModel
@@ -35,6 +39,8 @@ public class CourseBusinessModel
     public int SubjectId { get; set; }
 
     public SubjectBusinessModel? Subject { get; set; }
+
+    public IReadOnlyList<EnrollmentBusinessModel>? Enrollments { get; set; }
 }
 
 public class StudentBusinessModel
@@ -46,6 +52,8 @@ public class StudentBusinessModel
     public string Email { get; set; } = string.Empty;
 
     public DateTime DateOfBirth { get; set; }
+
+    public IReadOnlyList<EnrollmentBusinessModel>? Enrollments { get; set; }
 }
 
 public class EnrollmentBusinessModel

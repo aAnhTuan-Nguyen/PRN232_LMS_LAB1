@@ -1,11 +1,125 @@
 using PRN232.LMS.Repositories.Entities;
+using PRN232.LMS.Services.Models.Business;
 using PRN232.LMS.Services.Models.Responses;
 
 namespace PRN232.LMS.Services.Services;
 
 internal static class LmsMapping
 {
-    public static SemesterResponse ToSemesterResponse(Semester semester, bool includeCourses)
+    public static SemesterBusinessModel ToSemesterBusinessModel(Semester semester, bool includeCourses)
+    {
+        return new SemesterBusinessModel
+        {
+            SemesterId = semester.SemesterId,
+            SemesterName = semester.SemesterName,
+            StartDate = semester.StartDate,
+            EndDate = semester.EndDate,
+            Courses = includeCourses
+                ? semester.Courses
+                    .Select(course => ToCourseBusinessModel(
+                        course,
+                        includeSemester: false,
+                        includeSubject: course.Subject is not null,
+                        includeEnrollments: false))
+                    .ToList()
+                : null
+        };
+    }
+
+    public static SubjectBusinessModel ToSubjectBusinessModel(Subject subject, bool includeCourses)
+    {
+        return new SubjectBusinessModel
+        {
+            SubjectId = subject.SubjectId,
+            SubjectCode = subject.SubjectCode,
+            SubjectName = subject.SubjectName,
+            Credit = subject.Credit,
+            Courses = includeCourses
+                ? subject.Courses
+                    .Select(course => ToCourseBusinessModel(
+                        course,
+                        includeSemester: course.Semester is not null,
+                        includeSubject: false,
+                        includeEnrollments: false))
+                    .ToList()
+                : null
+        };
+    }
+
+    public static CourseBusinessModel ToCourseBusinessModel(
+        Course course,
+        bool includeSemester,
+        bool includeSubject,
+        bool includeEnrollments)
+    {
+        return new CourseBusinessModel
+        {
+            CourseId = course.CourseId,
+            CourseName = course.CourseName,
+            SemesterId = course.SemesterId,
+            Semester = includeSemester && course.Semester is not null
+                ? ToSemesterBusinessModel(course.Semester, includeCourses: false)
+                : null,
+            SubjectId = course.SubjectId,
+            Subject = includeSubject && course.Subject is not null
+                ? ToSubjectBusinessModel(course.Subject, includeCourses: false)
+                : null,
+            Enrollments = includeEnrollments
+                ? course.Enrollments
+                    .Select(enrollment => ToEnrollmentBusinessModel(
+                        enrollment,
+                        includeStudent: false,
+                        includeCourse: false))
+                    .ToList()
+                : null
+        };
+    }
+
+    public static StudentBusinessModel ToStudentBusinessModel(Student student, bool includeEnrollments)
+    {
+        return new StudentBusinessModel
+        {
+            StudentId = student.StudentId,
+            FullName = student.FullName,
+            Email = student.Email,
+            DateOfBirth = student.DateOfBirth,
+            Enrollments = includeEnrollments
+                ? student.Enrollments
+                    .Select(enrollment => ToEnrollmentBusinessModel(
+                        enrollment,
+                        includeStudent: false,
+                        includeCourse: enrollment.Course is not null))
+                    .ToList()
+                : null
+        };
+    }
+
+    public static EnrollmentBusinessModel ToEnrollmentBusinessModel(
+        Enrollment enrollment,
+        bool includeStudent,
+        bool includeCourse)
+    {
+        return new EnrollmentBusinessModel
+        {
+            EnrollmentId = enrollment.EnrollmentId,
+            StudentId = enrollment.StudentId,
+            Student = includeStudent && enrollment.Student is not null
+                ? ToStudentBusinessModel(enrollment.Student, includeEnrollments: false)
+                : null,
+            CourseId = enrollment.CourseId,
+            Course = includeCourse && enrollment.Course is not null
+                ? ToCourseBusinessModel(
+                    enrollment.Course,
+                    includeSemester: enrollment.Course.Semester is not null,
+                    includeSubject: enrollment.Course.Subject is not null,
+                    includeEnrollments: false)
+                : null,
+            EnrollDate = enrollment.EnrollDate,
+            Status = enrollment.Status
+        };
+    }
+
+    public static SemesterResponse ToSemesterResponse(SemesterBusinessModel semester, bool includeCourses)
     {
         return new SemesterResponse
         {
@@ -14,12 +128,12 @@ internal static class LmsMapping
             StartDate = semester.StartDate,
             EndDate = semester.EndDate,
             Courses = includeCourses
-                ? semester.Courses.Select(course => ToCourseSummary(course)).ToList()
+                ? semester.Courses?.Select(ToCourseSummary).ToList() ?? []
                 : null
         };
     }
 
-    public static SubjectResponse ToSubjectResponse(Subject subject, bool includeCourses)
+    public static SubjectResponse ToSubjectResponse(SubjectBusinessModel subject, bool includeCourses)
     {
         return new SubjectResponse
         {
@@ -28,13 +142,13 @@ internal static class LmsMapping
             SubjectName = subject.SubjectName,
             Credit = subject.Credit,
             Courses = includeCourses
-                ? subject.Courses.Select(course => ToCourseSummary(course)).ToList()
+                ? subject.Courses?.Select(ToCourseSummary).ToList() ?? []
                 : null
         };
     }
 
     public static CourseResponse ToCourseResponse(
-        Course course,
+        CourseBusinessModel course,
         bool includeSemester,
         bool includeSubject,
         bool includeEnrollments)
@@ -48,12 +162,12 @@ internal static class LmsMapping
             SubjectId = course.SubjectId,
             Subject = includeSubject && course.Subject is not null ? ToSubjectSummary(course.Subject) : null,
             Enrollments = includeEnrollments
-                ? course.Enrollments.Select(enrollment => ToEnrollmentSummary(enrollment, includeCourse: false)).ToList()
+                ? course.Enrollments?.Select(enrollment => ToEnrollmentSummary(enrollment, includeCourse: false)).ToList() ?? []
                 : null
         };
     }
 
-    public static StudentResponse ToStudentResponse(Student student, bool includeEnrollments)
+    public static StudentResponse ToStudentResponse(StudentBusinessModel student, bool includeEnrollments)
     {
         return new StudentResponse
         {
@@ -62,13 +176,13 @@ internal static class LmsMapping
             Email = student.Email,
             DateOfBirth = student.DateOfBirth,
             Enrollments = includeEnrollments
-                ? student.Enrollments.Select(enrollment => ToEnrollmentSummary(enrollment, includeCourse: true)).ToList()
+                ? student.Enrollments?.Select(enrollment => ToEnrollmentSummary(enrollment, includeCourse: true)).ToList() ?? []
                 : null
         };
     }
 
     public static EnrollmentResponse ToEnrollmentResponse(
-        Enrollment enrollment,
+        EnrollmentBusinessModel enrollment,
         bool includeStudent,
         bool includeCourse)
     {
@@ -84,7 +198,7 @@ internal static class LmsMapping
         };
     }
 
-    private static SemesterSummaryResponse ToSemesterSummary(Semester semester)
+    private static SemesterSummaryResponse ToSemesterSummary(SemesterBusinessModel semester)
     {
         return new SemesterSummaryResponse
         {
@@ -93,7 +207,7 @@ internal static class LmsMapping
         };
     }
 
-    private static SubjectSummaryResponse ToSubjectSummary(Subject subject)
+    private static SubjectSummaryResponse ToSubjectSummary(SubjectBusinessModel subject)
     {
         return new SubjectSummaryResponse
         {
@@ -103,7 +217,7 @@ internal static class LmsMapping
         };
     }
 
-    private static CourseSummaryResponse ToCourseSummary(Course course)
+    private static CourseSummaryResponse ToCourseSummary(CourseBusinessModel course)
     {
         return new CourseSummaryResponse
         {
@@ -114,7 +228,7 @@ internal static class LmsMapping
         };
     }
 
-    private static StudentSummaryResponse ToStudentSummary(Student student)
+    private static StudentSummaryResponse ToStudentSummary(StudentBusinessModel student)
     {
         return new StudentSummaryResponse
         {
@@ -124,7 +238,7 @@ internal static class LmsMapping
         };
     }
 
-    private static EnrollmentSummaryResponse ToEnrollmentSummary(Enrollment enrollment, bool includeCourse)
+    private static EnrollmentSummaryResponse ToEnrollmentSummary(EnrollmentBusinessModel enrollment, bool includeCourse)
     {
         return new EnrollmentSummaryResponse
         {

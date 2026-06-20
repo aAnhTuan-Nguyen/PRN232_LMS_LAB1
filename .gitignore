@@ -34,3 +34,5 @@ Desktop.ini
 
 # Markdown files
 MANUAL_BUILD_GUIDE.md
+
+/docs/internal/

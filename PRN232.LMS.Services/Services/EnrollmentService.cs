@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.UnitOfWork;
 using PRN232.LMS.Services.Exceptions;
+using PRN232.LMS.Services.Models.Business;
 using PRN232.LMS.Services.Models.Common;
 using PRN232.LMS.Services.Models.Requests;
 using PRN232.LMS.Services.Models.Responses;
@@ -63,7 +64,11 @@ public class EnrollmentService(IUnitOfWork unitOfWork) : IEnrollmentService
         Enrollment enrollment = await query.SingleOrDefaultAsync(item => item.EnrollmentId == id, cancellationToken)
             ?? throw new NotFoundException($"Enrollment with id {id} was not found.");
 
-        return LmsMapping.ToEnrollmentResponse(enrollment, includeStudent, includeCourse);
+        EnrollmentBusinessModel businessModel = LmsMapping.ToEnrollmentBusinessModel(
+            enrollment,
+            includeStudent,
+            includeCourse);
+        return LmsMapping.ToEnrollmentResponse(businessModel, includeStudent, includeCourse);
     }
 
     public async Task<EnrollmentResponse> CreateAsync(CreateEnrollmentRequest request, CancellationToken cancellationToken = default)
@@ -148,7 +153,14 @@ public class EnrollmentService(IUnitOfWork unitOfWork) : IEnrollmentService
         return QueryHelpers.ToPagedResponseAsync(
             query,
             parameters,
-            enrollment => LmsMapping.ToEnrollmentResponse(enrollment, includeStudent, includeCourse),
+            enrollment =>
+            {
+                EnrollmentBusinessModel businessModel = LmsMapping.ToEnrollmentBusinessModel(
+                    enrollment,
+                    includeStudent,
+                    includeCourse);
+                return LmsMapping.ToEnrollmentResponse(businessModel, includeStudent, includeCourse);
+            },
             cancellationToken);
     }
 

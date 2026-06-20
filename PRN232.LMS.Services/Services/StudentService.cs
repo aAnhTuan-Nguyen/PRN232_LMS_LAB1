@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PRN232.LMS.Repositories.Entities;
 using PRN232.LMS.Repositories.UnitOfWork;
 using PRN232.LMS.Services.Exceptions;
+using PRN232.LMS.Services.Models.Business;
 using PRN232.LMS.Services.Models.Common;
 using PRN232.LMS.Services.Models.Requests;
 using PRN232.LMS.Services.Models.Responses;
@@ -47,7 +48,11 @@ public class StudentService(IUnitOfWork unitOfWork) : IStudentService
         return QueryHelpers.ToPagedResponseAsync(
             query,
             parameters,
-            student => LmsMapping.ToStudentResponse(student, includeEnrollments),
+            student =>
+            {
+                StudentBusinessModel businessModel = LmsMapping.ToStudentBusinessModel(student, includeEnrollments);
+                return LmsMapping.ToStudentResponse(businessModel, includeEnrollments);
+            },
             cancellationToken);
     }
 
@@ -92,7 +97,11 @@ public class StudentService(IUnitOfWork unitOfWork) : IStudentService
         return await QueryHelpers.ToPagedResponseAsync(
             query,
             parameters,
-            student => LmsMapping.ToStudentResponse(student, includeEnrollments),
+            student =>
+            {
+                StudentBusinessModel businessModel = LmsMapping.ToStudentBusinessModel(student, includeEnrollments);
+                return LmsMapping.ToStudentResponse(businessModel, includeEnrollments);
+            },
             cancellationToken);
     }
 
@@ -114,7 +123,8 @@ public class StudentService(IUnitOfWork unitOfWork) : IStudentService
         Student student = await query.SingleOrDefaultAsync(item => item.StudentId == id, cancellationToken)
             ?? throw new NotFoundException($"Student with id {id} was not found.");
 
-        return LmsMapping.ToStudentResponse(student, includeEnrollments);
+        StudentBusinessModel businessModel = LmsMapping.ToStudentBusinessModel(student, includeEnrollments);
+        return LmsMapping.ToStudentResponse(businessModel, includeEnrollments);
     }
 
     public async Task<StudentResponse> CreateAsync(CreateStudentRequest request, CancellationToken cancellationToken = default)
@@ -129,7 +139,8 @@ public class StudentService(IUnitOfWork unitOfWork) : IStudentService
         await unitOfWork.Students.AddAsync(student, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return LmsMapping.ToStudentResponse(student, includeEnrollments: false);
+        StudentBusinessModel businessModel = LmsMapping.ToStudentBusinessModel(student, includeEnrollments: false);
+        return LmsMapping.ToStudentResponse(businessModel, includeEnrollments: false);
     }
 
     public async Task<StudentResponse> UpdateAsync(int id, UpdateStudentRequest request, CancellationToken cancellationToken = default)
@@ -144,7 +155,8 @@ public class StudentService(IUnitOfWork unitOfWork) : IStudentService
         unitOfWork.Students.Update(student);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return LmsMapping.ToStudentResponse(student, includeEnrollments: false);
+        StudentBusinessModel businessModel = LmsMapping.ToStudentBusinessModel(student, includeEnrollments: false);
+        return LmsMapping.ToStudentResponse(businessModel, includeEnrollments: false);
     }
 
     public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
