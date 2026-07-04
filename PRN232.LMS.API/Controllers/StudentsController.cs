@@ -11,6 +11,7 @@ namespace PRN232.LMS.API.Controllers;
 
 [ApiController]
 [ApiVersion(1.0)]
+[ApiVersion(2.0)]
 [Route("api/students")]
 [Produces("application/json", "application/xml")]
 public class StudentsController(IStudentService studentService) : ControllerBase

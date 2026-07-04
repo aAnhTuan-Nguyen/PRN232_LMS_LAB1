@@ -2,7 +2,7 @@ using System.Text;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using PRN232.LMS.API.Filters;
 using PRN232.LMS.API.Infrastructure;
 using PRN232.LMS.API.Middleware;
@@ -11,7 +11,6 @@ using PRN232.LMS.API.Swagger;
 using PRN232.LMS.Repositories;
 using PRN232.LMS.Services;
 using PRN232.LMS.Services.Options;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,7 +82,6 @@ builder.Services.AddApiVersioning(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddOpenApi();
 // Configure Swagger/OpenAPI documentation
 builder.Services.AddSwaggerGen(options =>
 {
@@ -105,10 +103,17 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Description = "Enter the JWT access token returned from /api/v1/auth/login."
     });
-    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         [
-            new OpenApiSecuritySchemeReference("Bearer", document, null)
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            }
         ] = []
     });
 });
@@ -119,20 +124,6 @@ await app.MigrateDatabaseAsync();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<GlobalExceptionMiddleware>();
-
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    // Map the Scalar API reference documentation at the "/docs" endpoint
-    app.MapScalarApiReference("/docs", options =>
-    {
-        options
-            .WithTitle("PRN232-Lab2")
-            .WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json")
-            .AddPreferredSecuritySchemes("Bearer")
-            .EnablePersistentAuthentication();
-    });
-}
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>

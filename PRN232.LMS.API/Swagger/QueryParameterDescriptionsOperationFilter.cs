@@ -1,4 +1,4 @@
-using Microsoft.OpenApi;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace PRN232.LMS.API.Swagger;
@@ -44,7 +44,7 @@ internal sealed class QueryParameterDescriptionsOperationFilter : IOperationFilt
 
         for (int index = operation.Parameters.Count - 1; index >= 0; index--)
         {
-            IOpenApiParameter parameter = operation.Parameters[index];
+            OpenApiParameter parameter = operation.Parameters[index];
 
             if (string.IsNullOrWhiteSpace(parameter.Name))
             {
@@ -57,10 +57,9 @@ internal sealed class QueryParameterDescriptionsOperationFilter : IOperationFilt
                 continue;
             }
 
-            if (DisplayNames.TryGetValue(parameter.Name, out string? displayName)
-                && parameter is OpenApiParameter openApiParameter)
+            if (DisplayNames.TryGetValue(parameter.Name, out string? displayName))
             {
-                openApiParameter.Name = displayName;
+                parameter.Name = displayName;
             }
 
             if (!Descriptions.TryGetValue(parameter.Name, out string? description))
