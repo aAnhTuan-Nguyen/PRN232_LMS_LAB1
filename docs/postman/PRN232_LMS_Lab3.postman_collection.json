@@ -1,0 +1,38 @@
+{
+  "info": { "name": "PRN232 LMS Lab 3 - Microservices", "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json" },
+  "variable": [
+    { "key": "gatewayUrl", "value": "http://localhost:8080" },
+    { "key": "identityUrl", "value": "http://localhost:8081" },
+    { "key": "studentUrl", "value": "http://localhost:8082" },
+    { "key": "courseUrl", "value": "http://localhost:8083" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1 - Login (stores tokens)",
+      "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"123456\"\n}" }, "url": "{{gatewayUrl}}/api/v1/auth/login" },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('JWT token generated', function () { pm.response.to.have.status(200); });", "var body = pm.response.json();", "pm.environment.set('accessToken', body.data.accessToken);", "pm.environment.set('refreshToken', body.data.refreshToken);"] } }]
+    },
+    {
+      "name": "2 - Protected API access",
+      "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"fullName\": \"Demo Student\",\n  \"email\": \"demo.student@lms.local\",\n  \"dateOfBirth\": \"2003-01-15T00:00:00Z\"\n}" }, "url": "{{gatewayUrl}}/api/v1/students" },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('Protected request succeeds', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });"] } }]
+    },
+    {
+      "name": "3 - Unauthorized protected request",
+      "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"studentId\": 1,\n  \"courseId\": 1,\n  \"enrollDate\": \"2026-07-16T00:00:00Z\",\n  \"status\": \"Active\"\n}" }, "url": "{{gatewayUrl}}/api/v1/enrollments" },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('Unauthorized is 401', function () { pm.response.to.have.status(401); });"] } }]
+    },
+    {
+      "name": "4 - Enrollment verifies Student through gRPC",
+      "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"studentId\": 1,\n  \"courseId\": 1,\n  \"enrollDate\": \"2026-07-16T00:00:00Z\",\n  \"status\": \"Active\"\n}" }, "url": "{{gatewayUrl}}/api/v1/enrollments" },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('Enrollment completed', function () { pm.response.to.have.status(201); });", "pm.test('Student returned by gRPC lookup', function () { pm.expect(pm.response.json().data.student.studentId).to.eql(1); });"] } }]
+    },
+    {
+      "name": "5 - Invalid Student rejected",
+      "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{accessToken}}" }], "body": { "mode": "raw", "raw": "{\n  \"studentId\": 999999,\n  \"courseId\": 1,\n  \"enrollDate\": \"2026-07-16T00:00:00Z\",\n  \"status\": \"Active\"\n}" }, "url": "{{gatewayUrl}}/api/v1/enrollments" },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('Unknown student returns 404', function () { pm.response.to.have.status(404); });"] } }]
+    }
+  ]
+}

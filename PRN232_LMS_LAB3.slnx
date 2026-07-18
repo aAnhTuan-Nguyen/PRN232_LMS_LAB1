@@ -1,0 +1,13 @@
+<Solution>
+  <Project Path="PRN232.LMS.Contracts/PRN232.LMS.Contracts.csproj" />
+  <Project Path="PRN232.Identity.Repositories/PRN232.Identity.Repositories.csproj" />
+  <Project Path="PRN232.Identity.Services/PRN232.Identity.Services.csproj" />
+  <Project Path="PRN232.Identity.API/PRN232.Identity.API.csproj" />
+  <Project Path="PRN232.Student.Repositories/PRN232.Student.Repositories.csproj" />
+  <Project Path="PRN232.Student.Services/PRN232.Student.Services.csproj" />
+  <Project Path="PRN232.Student.API/PRN232.Student.API.csproj" />
+  <Project Path="PRN232.Course.Repositories/PRN232.Course.Repositories.csproj" />
+  <Project Path="PRN232.Course.Services/PRN232.Course.Services.csproj" />
+  <Project Path="PRN232.Course.API/PRN232.Course.API.csproj" />
+  <Project Path="PRN232.ApiGateway/PRN232.ApiGateway.csproj" />
+</Solution>

@@ -1,41 +1,74 @@
 services:
-  lab2:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: lab2
+  api-gateway:
+    build: { context: ., dockerfile: PRN232.ApiGateway/Dockerfile }
     depends_on:
-      postgres:
-        condition: service_healthy
+      identity-service: { condition: service_healthy }
+      student-service: { condition: service_healthy }
+      course-service: { condition: service_healthy }
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__DefaultConnection: ${ConnectionStrings__DefaultConnection:?set in .env}
-      Jwt__Issuer: ${Jwt__Issuer:-PRN232.LMS.API}
+      Jwt__Issuer: ${Jwt__Issuer:-PRN232.Identity}
       Jwt__Audience: ${Jwt__Audience:-PRN232.LMS.Client}
       Jwt__Secret: ${Jwt__Secret:?set in .env}
-      Jwt__AccessTokenMinutes: ${Jwt__AccessTokenMinutes:-60}
-      Jwt__RefreshTokenDays: ${Jwt__RefreshTokenDays:-7}
-    ports:
-      - "${LAB2_API_PORT:-8080}:8080"
-
-  postgres:
-    image: postgres:16
-    container_name: lab2-postgres
+    ports: [ "${GATEWAY_PORT:-8080}:8080" ]
+  identity-service:
+    build: { context: ., dockerfile: PRN232.Identity.API/Dockerfile }
+    depends_on: { identity-db: { condition: service_healthy } }
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-prn232_lms}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-prn232_lms}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
-    volumes:
-      - lab2_postgres_data:/var/lib/postgresql/data
-
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=identity-db;Database=identity_lms;Username=postgres;Password=${POSTGRES_PASSWORD:?set in .env}
+      Jwt__Issuer: ${Jwt__Issuer:-PRN232.Identity}
+      Jwt__Audience: ${Jwt__Audience:-PRN232.LMS.Client}
+      Jwt__Secret: ${Jwt__Secret:?set in .env}
+    ports: [ "${IDENTITY_PORT:-8081}:8080" ]
+    healthcheck: { test: [ "CMD-SHELL", "test -f /app/PRN232.Identity.API.dll" ], interval: 5s, timeout: 3s, retries: 20 }
+  student-service:
+    build: { context: ., dockerfile: PRN232.Student.API/Dockerfile }
+    depends_on: { student-db: { condition: service_healthy } }
+    environment:
+      ConnectionStrings__DefaultConnection: Host=student-db;Database=student_lms;Username=postgres;Password=${POSTGRES_PASSWORD:?set in .env}
+      Grpc__CourseUrl: http://course-service:9083
+      Jwt__Issuer: ${Jwt__Issuer:-PRN232.Identity}
+      Jwt__Audience: ${Jwt__Audience:-PRN232.LMS.Client}
+      Jwt__Secret: ${Jwt__Secret:?set in .env}
+    ports: [ "${STUDENT_PORT:-8082}:8080" ]
+    healthcheck: { test: [ "CMD-SHELL", "test -f /app/PRN232.Student.API.dll" ], interval: 5s, timeout: 3s, retries: 20 }
+  course-service:
+    build: { context: ., dockerfile: PRN232.Course.API/Dockerfile }
+    depends_on: { course-db: { condition: service_healthy } }
+    environment:
+      ConnectionStrings__DefaultConnection: Host=course-db;Database=course_lms;Username=postgres;Password=${POSTGRES_PASSWORD:?set in .env}
+      Grpc__StudentUrl: http://student-service:9082
+      Jwt__Issuer: ${Jwt__Issuer:-PRN232.Identity}
+      Jwt__Audience: ${Jwt__Audience:-PRN232.LMS.Client}
+      Jwt__Secret: ${Jwt__Secret:?set in .env}
+    ports: [ "${COURSE_PORT:-8083}:8080" ]
+    healthcheck: { test: [ "CMD-SHELL", "test -f /app/PRN232.Course.API.dll" ], interval: 5s, timeout: 3s, retries: 20 }
+  identity-db: &postgres
+    image: postgres:16
+    environment:
+      POSTGRES_DB: identity_lms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set in .env}"
+    healthcheck: { test: [ "CMD-SHELL", "pg_isready -U postgres -d identity_lms" ], interval: 5s, timeout: 3s, retries: 20 }
+    volumes: [ "identity_data:/var/lib/postgresql/data" ]
+  student-db:
+    <<: *postgres
+    environment:
+      POSTGRES_DB: student_lms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set in .env}"
+    healthcheck: { test: [ "CMD-SHELL", "pg_isready -U postgres -d student_lms" ], interval: 5s, timeout: 3s, retries: 20 }
+    volumes: [ "student_data:/var/lib/postgresql/data" ]
+  course-db:
+    <<: *postgres
+    environment:
+      POSTGRES_DB: course_lms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?set in .env}"
+    healthcheck: { test: [ "CMD-SHELL", "pg_isready -U postgres -d course_lms" ], interval: 5s, timeout: 3s, retries: 20 }
+    volumes: [ "course_data:/var/lib/postgresql/data" ]
 volumes:
-  lab2_postgres_data:
+  identity_data: {}
+  student_data: {}
+  course_data: {}

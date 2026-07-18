@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+option csharp_namespace = "PRN232.LMS.Contracts";
+package prn232.lms;
+
+service StudentLookup {
+  rpc GetStudent (StudentIdRequest) returns (StudentLookupReply);
+  rpc GetStudents (StudentIdsRequest) returns (StudentsReply);
+}
+
+service CourseEnrollmentLookup {
+  rpc HasEnrollments (StudentIdRequest) returns (ExistsReply);
+  rpc GetEnrollments (StudentIdsRequest) returns (StudentEnrollmentsReply);
+}
+
+message StudentIdRequest { int32 student_id = 1; }
+message StudentIdsRequest { repeated int32 student_ids = 1; }
+message ExistsReply { bool exists = 1; }
+message StudentSummary {
+  int32 student_id = 1;
+  string full_name = 2;
+  string email = 3;
+}
+message StudentLookupReply {
+  bool exists = 1;
+  StudentSummary student = 2;
+}
+message StudentsReply { repeated StudentSummary students = 1; }
+message EnrollmentSummary {
+  int32 student_id = 1;
+  int32 enrollment_id = 2;
+  int32 course_id = 3;
+  string course_name = 4;
+  string enroll_date = 5;
+  string status = 6;
+}
+message StudentEnrollmentsReply { repeated EnrollmentSummary enrollments = 1; }
